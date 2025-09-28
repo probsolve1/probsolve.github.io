@@ -1,282 +1,1357 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProbSolver</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" xintegrity="sha384-GvrxHw0jGz5iG1P5D4z9z5E5q6p7c5O5N5P5q6a7x8E5" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js" xintegrity="sha384-jM3l3g0B0s3k3q1g1r1p1d1s1t1u1v1w1x1y1z1=" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" xintegrity="sha384-NlO2lJ+s3g2b1b1a1c1d1e1f1g1h1i1j1k1l1m1n1o1p1q1r1s1t1u1v1w1x1y1z1=" crossorigin="anonymous" onload="renderMathInElement(document.body);"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>ProbSolver - AI Tutor, Chat & Image Generator</title>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(-45deg, hsl(240, 17%, 6%), hsl(240, 20%, 8%), hsl(245, 15%, 10%), hsl(250, 12%, 8%));
+            background-size: 400% 400%;
+            animation: gradientFlow 15s ease infinite;
+            color: hsl(226, 100%, 92%);
             min-height: 100vh;
-            padding: 1rem;
+            display: flex;
+            flex-direction: column;
         }
-        .solver-container {
-            background-color: #ffffff;
-            border-radius: 1.5rem;
-            padding: 2rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            width: 100%;
-            max-width: 600px;
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-        .input-area {
-            width: 100%;
-            min-height: 120px;
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
             padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .header {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .title {
+            font-size: 3.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, hsl(250, 100%, 65%), hsl(217, 91%, 60%));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .gradient-line {
+            width: 6rem;
+            height: 2px;
+            background: linear-gradient(135deg, hsl(250, 100%, 65%), hsl(217, 91%, 60%));
+            margin: 0 auto 2rem;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 0.5rem;
+            background: hsl(240, 15%, 8%);
+            border: 1px solid hsl(240, 15%, 15%);
             border-radius: 0.75rem;
-            background-color: #f9fafb;
-            color: #1f2937;
-            font-size: 1.125rem;
-            resize: vertical;
-            border: 2px solid transparent;
-            transition: border-color 0.2s;
-            outline: none;
+            padding: 0.25rem;
+            margin-bottom: 2rem;
+            justify-content: center;
         }
-        .input-area:focus {
-            border-color: #34d399;
-        }
-        .solve-button {
-            width: 100%;
-            margin-top: 1rem;
-            padding: 1rem;
-            color: white;
-            font-weight: 700;
+
+        .mode-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: hsl(240, 5%, 65%);
             border-radius: 0.5rem;
-            background-color: #34d399; /* emerald-500 */
-            transition-property: background-color, box-shadow;
-            transition-duration: 0.2s, 0.3s;
-            transition-timing-function: ease-in-out;
-            box-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
+            font-size: 0.875rem;
+            font-weight: 500;
             cursor: pointer;
+            transition: all 0.3s;
         }
 
-        .solve-button:hover {
-            background-color: #2e9f78; /* emerald-600 */
-            box-shadow: 0 0 20px rgba(52, 211, 153, 0.6);
+        .mode-btn.active {
+            background: hsl(250, 100%, 65%);
+            color: hsl(240, 17%, 6%);
+            box-shadow: 0 0 20px hsl(250, 100%, 65%, 0.3);
         }
 
-        .solve-button:active {
-            background-color: #298d6c; /* emerald-700 */
+        .mode-btn:hover:not(.active) {
+            color: hsl(226, 100%, 92%);
         }
-        
-        .result-box {
-            margin-top: 1.5rem;
-            padding: 1.5rem;
-            background-color: #f3f4f6;
-            border-radius: 0.75rem;
-            min-height: 150px;
-            color: #1f2937;
-            overflow-y: auto;
-            max-height: 500px;
+
+        .description {
+            color: hsl(240, 5%, 65%);
+            max-width: 32rem;
+            margin: 0 auto;
             line-height: 1.6;
         }
-        .result-box h2 {
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem 0 1rem;
+        }
+        
+        .messages-container:after {
+            content: '';
+            display: block;
+            height: 8rem;
+        }
+
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .messages-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .messages-container::-webkit-scrollbar-thumb {
+            background: hsl(240, 15%, 15%);
+            border-radius: 3px;
+        }
+        
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background: hsl(250, 100%, 65%, 0.5);
+        }
+
+        .minimized-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .minimized-header .title {
+            font-size: 1.875rem;
+        }
+
+        .minimized-header .gradient-line {
+            width: 4rem;
+        }
+
+        .message {
+            margin-bottom: 2rem;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .user-bubble {
+            background: hsl(250, 100%, 65%);
+            color: hsl(240, 17%, 6%);
+            padding: 0.75rem 1rem;
+            border-radius: 1rem 1rem 0.5rem 1rem;
+            max-width: 24rem;
+            font-size: 0.875rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-right: 0.5rem;
+        }
+
+        .user-image {
+            max-width: 100%;
+            border-radius: 0.5rem;
+        }
+
+        .ai-message {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .ai-content {
+            max-width: 100%;
+            margin-left: 0.5rem;
+        }
+
+        .response-header {
             font-size: 1.5rem;
             font-weight: 600;
-            margin-top: 1rem;
-            margin-bottom: 0.5rem;
-            color: #1f2937;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid hsl(240, 15%, 15%);
         }
-        .result-box h2:first-of-type {
-            margin-top: 0;
+
+        .response-text {
+            color: hsl(226, 100%, 92%);
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            word-wrap: break-word;
+            white-space: pre-wrap;
         }
-        .result-box p {
+
+        .response-text h2 {
+            color: hsl(217, 91%, 60%);
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.75rem 0;
+        }
+
+        .response-text p {
+            margin-bottom: 0.75rem;
+        }
+
+        .response-text ul {
+            margin-left: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .code-preview {
+            background: hsl(240, 15%, 8%);
+            border: 1px solid hsl(240, 15%, 15%);
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: hsl(240, 15%, 10%);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid hsl(240, 15%, 15%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-language {
+            color: hsl(217, 91%, 60%);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .copy-btn {
+            background: hsl(250, 100%, 65%);
+            color: hsl(240, 17%, 6%);
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: hsl(250, 100%, 70%);
+        }
+
+        .code-content {
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        .action-btn {
+            background: hsl(240, 15%, 12%);
+            color: hsl(226, 100%, 92%);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .action-btn:hover {
+            background: hsl(240, 15%, 15%);
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            color: hsl(240, 5%, 65%);
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 0.25rem;
+            margin-right: 0.75rem;
+        }
+
+        .loading-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            background: hsl(250, 100%, 65%);
+            border-radius: 50%;
+            animation: bounce 1.4s ease-in-out infinite both;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+        .loading-dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1.0);
+            }
+        }
+        
+        .footer-input-wrapper {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+        }
+
+        .input-section {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .image-preview {
             margin-bottom: 1rem;
         }
-        .image-preview {
+
+        .image-preview-container {
+            position: relative;
+            background: hsl(240, 15%, 8%);
+            border: 1px solid hsl(240, 15%, 15%);
+            border-radius: 1rem;
+            padding: 1rem;
+            max-width: 24rem;
+        }
+
+        .preview-image {
             max-width: 100%;
-            margin-top: 1rem;
+            max-height: 12rem;
             border-radius: 0.5rem;
-            border: 2px solid #e5e7eb;
+            object-fit: contain;
         }
-        .upload-button-container {
-            display: flex;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-        .upload-button {
-            padding: 0.75rem 1.5rem;
-            background-color: #e5e7eb;
-            color: #4b5563;
-            border-radius: 0.5rem;
-            font-weight: 600;
+
+        .remove-image {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: hsl(240, 15%, 20%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 1.5rem;
+            height: 1.5rem;
             cursor: pointer;
-            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            transition: all 0.2s;
         }
-        .upload-button:hover {
-            background-color: #d1d5db;
+
+        .remove-image:hover {
+            background: hsl(240, 15%, 15%);
+        }
+
+        .input-bar {
+            border: 1px solid hsl(240, 15%, 15%);
+            border-radius: 1rem;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-field {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: hsl(226, 100%, 92%);
+            font-size: 0.875rem;
+            outline: none;
+        }
+
+        .input-field::placeholder {
+            color: hsl(240, 5%, 65%);
+        }
+
+        .input-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .action-icon {
+            padding: 0.5rem;
+            background: transparent;
+            border: none;
+            color: hsl(240, 5%, 65%);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-icon:hover {
+            background: hsl(240, 15%, 15%);
+            color: hsl(226, 100%, 92%);
+        }
+
+        .action-icon.recording {
+            background: hsl(142, 76%, 36%);
+            color: white;
+        }
+
+        .typewriter-cursor {
+            display: inline-block;
+            background-color: hsl(250, 100%, 65%);
+            width: 2px;
+            height: 1.2em;
+            animation: blink 1s infinite;
+            margin-left: 2px;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .generated-image {
+            max-width: 100%;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .drop-zone {
+            border: 2px dashed hsl(240, 15%, 15%);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            color: hsl(240, 5%, 65%);
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+
+        .drop-zone.dragover {
+            border-color: hsl(250, 100%, 65%);
+            background: hsl(250, 100%, 65%, 0.1);
+            color: hsl(250, 100%, 75%);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 0.5rem;
+            }
+            
+            .title {
+                font-size: 2.5rem;
+            }
+            
+            .mode-toggle {
+                flex-wrap: wrap;
+            }
+            
+            .user-bubble {
+                max-width: 18rem;
+            }
+            
+            .input-bar {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="solver-container">
-        <h1 class="text-3xl font-bold mb-4 text-center text-gray-800">ProbSolver</h1>
-        
-        <div class="word-problem-solver mt-4">
-            <p class="mb-4 text-center text-gray-600">Enter your math problem or upload a photo of it below and get a detailed solution.</p>
-            <textarea id="wordProblemInput" placeholder="Type your math problem here..."
-                class="input-area"></textarea>
-            <div class="upload-button-container">
-                <label for="imageUpload" class="upload-button">Upload Photo</label>
-                <input type="file" id="imageUpload" class="hidden" accept="image/*" />
+    <div class="container">
+        <!-- Header (shows when no messages) -->
+        <div id="headerSection" class="header">
+            <h1 class="title">ProbSolver</h1>
+            <div class="gradient-line"></div>
+            <div class="mode-toggle">
+                <button class="mode-btn active" data-mode="study">✨ Study Mode</button>
+                <button class="mode-btn" data-mode="normal">💬 Chat Mode</button>
+                <button class="mode-btn" data-mode="image">🎨 Image Mode</button>
             </div>
-            <img id="imagePreview" src="#" alt="Image Preview" class="image-preview hidden" />
-            <button id="solveButton"
-                class="solve-button">Solve Problem</button>
-            <div id="wordProblemResult" class="result-box">
-                <p class="text-gray-500 text-center">Your solution will appear here.</p>
+            <p class="description" id="modeDescription">
+                Your AI math tutor and coding mentor. Upload problems, ask questions, and get step-by-step solutions with live previews.
+            </p>
+        </div>
+
+        <!-- Messages Area -->
+        <div id="messagesContainer" class="messages-container hidden">
+            <!-- Minimized Header -->
+            <div class="minimized-header">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-bottom: 0.5rem;">
+                    <h1 class="title">ProbSolver</h1>
+                    <div class="mode-toggle">
+                        <button class="mode-btn active" data-mode="study">✨ Study Mode</button>
+                        <button class="mode-btn" data-mode="normal">💬 Chat Mode</button>
+                        <button class="mode-btn" data-mode="image">🎨 Image Mode</button>
+                    </div>
+                </div>
+                <div class="gradient-line"></div>
+            </div>
+            
+            <!-- Messages -->
+            <div id="messages"></div>
+        </div>
+    </div>
+
+    <!-- Fixed Input Section at the bottom -->
+    <div class="footer-input-wrapper">
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading hidden">
+            <div class="loading-dots">
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+            </div>
+            <span id="loadingText">ProbSolver is thinking...</span>
+        </div>
+        
+        <div class="input-section">
+            <!-- Drop Zone (for image mode) -->
+            <div id="dropZone" class="drop-zone hidden">
+                <p>Drop an image here or click below to upload</p>
+            </div>
+
+            <!-- Image Preview -->
+            <div id="imagePreview" class="image-preview hidden">
+                <div class="image-preview-container">
+                    <img id="previewImage" class="preview-image" alt="Preview">
+                    <button class="remove-image" onclick="removeImage()">×</button>
+                </div>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="input-bar">
+                <input 
+                    type="text" 
+                    id="inputField" 
+                    class="input-field" 
+                    placeholder="Ask any subject question or coding problem..."
+                >
+                
+                <div class="input-actions">
+                    <!-- Image Upload -->
+                    <label class="action-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+                        </svg>
+                        <input type="file" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
+                    </label>
+                    
+                    <!-- Camera Upload -->
+                    <label class="action-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 17c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm1.5-9H17v10.5c0 1.1-.9 2-2 2h-1V13c0-2.76-2.24-5-5-5H7.5V6.5c0-1.1.9-2 2-2h4z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        <input type="file" accept="image/*" capture="environment" style="display: none;" onchange="handleImageUpload(event)">
+                    </label>
+                    
+                    <!-- Voice Button -->
+                    <button class="action-icon" id="voiceBtn" onclick="toggleVoiceRecording()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 14c1.77 0 3-1.23 3-3V5c0-1.77-1.23-3-3-3S9 3.23 9 5v6c0 1.77 1.23 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.7z"/>
+                        </svg>
+                    </button>
+                    
+                    <!-- Send Button -->
+                    <button class="action-icon" onclick="solveProblem()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        const wordProblemInput = document.getElementById('wordProblemInput');
-        const imageUpload = document.getElementById('imageUpload');
-        const imagePreview = document.getElementById('imagePreview');
-        const solveButton = document.getElementById('solveButton');
-        const wordProblemResult = document.getElementById('wordProblemResult');
+        // State management
+        let currentMode = 'study';
+        let conversationHistory = [];
+        let messages = [];
+        let isLoading = false;
+        let isGenerating = false;
+        let uploadedImage = null;
+        let currentProblem = '';
+        let currentProblemImage = null;
+        let isRecording = false;
+        let recognition = null;
+        let userIsScrolling = false;
+        let scrollTimeout;
 
-        let uploadedImageBase64 = null;
-        let uploadedImageMimeType = null;
+        // Gemini API configuration
+        // WARNING: Hard-coding your API key is not a secure practice for public repositories.
+        // It is highly recommended to use a secure method for managing API keys in production.
+        const API_KEY = '';
 
-        imageUpload.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const base64String = e.target.result;
-                    imagePreview.src = base64String;
-                    imagePreview.classList.remove('hidden');
-                    uploadedImageBase64 = base64String.split(',')[1];
-                    uploadedImageMimeType = file.type;
-                };
-                reader.readAsDataURL(file);
-            }
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSpeechRecognition();
+            setupEventListeners();
+            updateModeDescription();
+            switchMode('study');
         });
 
-        function parseAndRenderMarkdown(markdown) {
-            const lines = markdown.split('\n');
-            let html = '';
-            let inList = false;
-            let currentListType = '';
+        // Speech recognition setup
+        function initializeSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+                
+                recognition.onstart = () => {
+                    isRecording = true;
+                    document.getElementById('voiceBtn').classList.add('recording');
+                };
+                
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('inputField').value = transcript;
+                };
+                
+                recognition.onend = () => {
+                    isRecording = false;
+                    document.getElementById('voiceBtn').classList.remove('recording');
+                };
+            } else {
+                document.getElementById('voiceBtn').style.display = 'none';
+            }
+        }
 
-            lines.forEach(line => {
-                if (line.startsWith('## ')) {
-                    if (inList) {
-                        html += `</${currentListType}>`;
-                        inList = false;
-                    }
-                    html += `<h2>${line.substring(3).trim()}</h2>`;
-                } else if (line.trim().startsWith('* ')) {
-                    const listItem = line.trim().substring(2).trim();
-                    if (!inList || currentListType !== 'ul') {
-                        if (inList) html += `</${currentListType}>`;
-                        html += `<ul>`;
-                        inList = true;
-                        currentListType = 'ul';
-                    }
-                    html += `<li>${listItem}</li>`;
-                } else if (line.trim().startsWith('1. ')) {
-                    const listItem = line.trim().substring(2).trim();
-                    if (!inList || currentListType !== 'ol') {
-                        if (inList) html += `</${currentListType}>`;
-                        html += `<ol>`;
-                        inList = true;
-                        currentListType = 'ol';
-                    }
-                    html += `<li>${listItem}</li>`;
-                } else if (line.trim() !== '') {
-                    if (inList) {
-                        html += `</${currentListType}>`;
-                        inList = false;
-                    }
-                    html += `<p>${line.trim()}</p>`;
+        // Event listeners
+        function setupEventListeners() {
+            // Mode buttons
+            document.querySelectorAll('[data-mode]').forEach(btn => {
+                btn.addEventListener('click', () => switchMode(btn.dataset.mode));
+            });
+
+            // Enter key
+            document.getElementById('inputField').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    solveProblem();
                 }
             });
-            if (inList) {
-                html += `</${currentListType}>`;
+
+            // Paste event for images
+            document.addEventListener('paste', handlePaste);
+
+            // Drag and drop
+            document.addEventListener('dragover', handleDragOver);
+            document.addEventListener('drop', handleDrop);
+
+            // Scroll event to manage auto-scroll
+            const messagesContainer = document.getElementById('messagesContainer');
+            messagesContainer.addEventListener('scroll', () => {
+                userIsScrolling = true;
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    userIsScrolling = false;
+                }, 500);
+            });
+        }
+
+        // Mode switching
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // Update active button
+            document.querySelectorAll('[data-mode]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+            
+            updateModeDescription();
+            updateDropZone();
+        }
+
+        function updateModeDescription() {
+            const descriptions = {
+                study: 'Your AI math tutor and coding mentor. Upload problems, ask questions, and get step-by-step solutions with live previews.',
+                normal: 'Your friendly AI companion. Let\'s chat about anything on your mind!',
+                image: 'Generate, edit, and transform images with AI. Describe what you want to create or upload an image to convert it.'
+            };
+            
+            document.getElementById('modeDescription').textContent = descriptions[currentMode];
+            
+            const placeholders = {
+                study: 'Ask any subject question or coding problem...',
+                normal: 'What\'s on your mind?',
+                image: 'Describe the image you want to generate or edit...'
+            };
+            
+            document.getElementById('inputField').placeholder = uploadedImage ? 
+                'Image ready to analyze...' : placeholders[currentMode];
+        }
+
+        function updateDropZone() {
+            const dropZone = document.getElementById('dropZone');
+            if (currentMode === 'image' && !uploadedImage) {
+                dropZone.classList.remove('hidden');
+            } else {
+                dropZone.classList.add('hidden');
             }
+        }
+
+        // Image handling
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedImage = {
+                    data: e.target.result.split(',')[1],
+                    mimeType: file.type
+                };
+                showImagePreview(e.target.result);
+                updateModeDescription();
+                updateDropZone();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showImagePreview(src) {
+            document.getElementById('previewImage').src = src;
+            document.getElementById('imagePreview').classList.remove('hidden');
+        }
+
+        function removeImage() {
+            uploadedImage = null;
+            document.getElementById('imagePreview').classList.add('hidden');
+            updateModeDescription();
+            updateDropZone();
+        }
+
+        // Paste handling
+        function handlePaste(event) {
+            const items = event.clipboardData?.items;
+            if (items) {
+                for (const item of Array.from(items)) {
+                    if (item.type.indexOf('image') !== -1) {
+                        const blob = item.getAsFile();
+                        if (blob) {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                                uploadedImage = {
+                                    data: e.target.result.split(',')[1],
+                                    mimeType: blob.type
+                                };
+                                showImagePreview(e.target.result);
+                                updateModeDescription();
+                                updateDropZone();
+                            };
+                            reader.readAsDataURL(blob);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Drag and drop
+        function handleDragOver(e) {
+            e.preventDefault();
+            if (currentMode === 'image') {
+                document.getElementById('dropZone').classList.add('dragover');
+            }
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('dropZone').classList.remove('dragover');
+            
+            const files = e.dataTransfer?.files;
+            if (files && files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        uploadedImage = {
+                            data: e.target.result.split(',')[1],
+                            mimeType: file.type
+                        };
+                        showImagePreview(e.target.result);
+                        updateModeDescription();
+                        updateDropZone();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            }
+        }
+
+        // Voice recording
+        function toggleVoiceRecording() {
+            if (!recognition) return;
+            
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        }
+
+        // System instructions
+        function getSystemInstruction() {
+            const instructions = {
+                study: `You are ProbSolver, an expert tutor and coding mentor for ALL subjects created by Naitik Khandelwal. 
+
+STUDY MODE CAPABILITIES:
+- Provide clear, step-by-step solutions for ANY subject (Math, Science, History, Literature, Languages, etc.)
+- Use LaTeX for mathematical expressions (wrap in $ for inline math, $$ for display mode math)
+- Generate code examples with detailed explanations for programming problems
+- Create live, interactive code previews when requested
+- Remember previous conversations and reference them
+- Be comprehensive yet clear in explanations
+
+CODING SPECIALIZATION:
+- Provide working code examples with live previews
+- Explain code line-by-line when asked
+- Show best practices and multiple approaches
+- Create interactive demonstrations
+
+CONVERSATION CONTEXT:
+You have access to our conversation history. Reference previous problems, solutions, or discussions when relevant.
+
+CREATOR ATTRIBUTION:
+When someone asks who created you, respond: "I was created by Naitik Khandelwal"
+
+Be professional, educational, and focus on helping students learn effectively across all subjects.`,
+
+                normal: `You are ProbSolver, a friendly AI companion created by Naitik Khandelwal.
+
+NORMAL MODE PERSONALITY:
+- Talk like a caring friend, mentor, or family member
+- Be warm, supportive, and understanding  
+- Adapt your tone to be like a mentor for students, a caring parent figure, or a true friend
+- Show genuine interest in the person's life and wellbeing
+- Use encouraging and uplifting language
+- Remember previous conversations to build a personal connection
+
+CONVERSATION CONTEXT:
+You have access to our conversation history. Use this to build rapport and remember what we've talked about before.
+
+CREATOR ATTRIBUTION:
+When someone asks who created you, respond: "I was created by Naitik Khandelwal"
+
+Be conversational, empathetic, and focus on building a genuine friendship while still being helpful.`,
+
+                image: `You are ProbSolver, an AI image generation and editing assistant created by Naitik Khandelwal.
+
+IMAGE MODE CAPABILITIES:
+- Generate images from text descriptions
+- Edit and enhance existing images
+- Convert regular images to AI-generated artistic versions  
+- Create variations and styles of uploaded images
+- Provide image analysis and suggestions
+
+CONVERSATION CONTEXT:
+You have access to our conversation history. Reference previous image requests when relevant.
+
+CREATOR ATTRIBUTION:
+When someone asks who created you, respond: "I was created by Naitik Khandelwal"
+
+Be creative, helpful, and focus on bringing visual ideas to life.`
+            };
+            
+            return instructions[currentMode];
+        }
+
+        // Add message to conversation
+        function addMessage(content, sender, isImage = false, showActions = false, hasCode = false) {
+            const messageId = Date.now().toString();
+            const message = {
+                id: messageId,
+                content,
+                sender,
+                isImage,
+                showActions,
+                hasCode,
+                timestamp: Date.now()
+            };
+            
+            messages.push(message);
+            
+            // Add to conversation history for context
+            if (!isImage) {
+                conversationHistory.push({
+                    id: messageId,
+                    content,
+                    sender,
+                    isImage,
+                    timestamp: Date.now()
+                });
+            }
+            
+            renderMessage(message);
+            return messageId;
+        }
+
+        // Render message
+        function renderMessage(message) {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.id = `message-${message.id}`;
+            
+            if (message.sender === 'user') {
+                messageDiv.innerHTML = `
+                    <div class="user-message">
+                        <div class="user-bubble">
+                            ${message.isImage ? 
+                                `<img src="${message.content}" alt="User uploaded" class="user-image">` :
+                                `<span>${escapeHtml(message.content)}</span>`
+                            }
+                        </div>
+                    </div>
+                `;
+            } else {
+                const headerText = currentMode === 'study' ? 'Solution' : 
+                                  currentMode === 'image' ? 'Image Result' : 'Response';
+                
+                messageDiv.innerHTML = `
+                    <div class="ai-message">
+                        <div class="ai-content">
+                            <h2 class="response-header">${headerText}</h2>
+                            <div class="response-text" id="content-${message.id}">${message.content}</div>
+                            ${message.hasCode ? '<div id="code-' + message.id + '"></div>' : ''}
+                            ${message.showActions && currentMode === 'study' ? `
+                                <div class="action-buttons">
+                                    <button class="action-btn" onclick="explainConcept()">
+                                        ✨ Explain Concept
+                                    </button>
+                                    <button class="action-btn" onclick="generatePractice()">
+                                        ✨ Practice Problems
+                                    </button>
+                                    <button class="action-btn" onclick="generateSummary()">
+                                        📝 Shorten it
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Typewriter effect
+        async function typewriterEffect(messageId, text) {
+            const words = text.split(' ');
+            let currentText = '';
+            const contentElement = document.getElementById(`content-${messageId}`);
+            
+            for (let i = 0; i < words.length; i++) {
+                currentText += words[i] + ' ';
+                
+                let displayText = parseMarkdown(currentText);
+                displayText += '<span class="typewriter-cursor">|</span>';
+                
+                contentElement.innerHTML = displayText;
+                
+                if (!userIsScrolling) {
+                    scrollToBottom();
+                }
+                
+                await new Promise(resolve => setTimeout(resolve, 30));
+            }
+            
+            const finalContent = parseMarkdown(text);
+            contentElement.innerHTML = finalContent;
+            
+            const message = messages.find(m => m.id === messageId);
+            if (message && message.hasCode) {
+                renderCodeBlocks(messageId, text);
+            }
+            
+            if (!userIsScrolling) {
+                setTimeout(scrollToBottom, 100);
+            }
+        }
+
+        // Parse markdown and LaTeX
+        function parseMarkdown(text) {
+            let html = text
+                .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+                .replace(/^\* (.+)$/gm, '<p style="margin-left: 1.5rem; margin-bottom: 0.5rem;">• $1</p>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/^(?!<h2|<p style)(.+)$/gm, '<p>$1</p>')
+                .replace(/<p><\/p>/g, '');
+            
+            html = html.replace(/\$\$(.*?)\$\$/g, (match, math) => {
+                try {
+                    return katex.renderToString(math, { displayMode: true });
+                } catch (e) {
+                    return match;
+                }
+            });
+            
+            html = html.replace(/\$([^$]+)\$/g, (match, math) => {
+                try {
+                    return katex.renderToString(math, { displayMode: false });
+                } catch (e) {
+                    return match;
+                }
+            });
+            
             return html;
         }
 
-        solveButton.addEventListener('click', async () => {
-            const userQuery = wordProblemInput.value.trim();
-            if (!userQuery && !uploadedImageBase64) {
-                wordProblemResult.innerHTML = '<p class="text-red-500 text-center">Please enter a word problem or upload an image.</p>';
+        // Detect and render code blocks
+        function detectCode(text) {
+            return /```[\s\S]*?```/.test(text);
+        }
+
+        function renderCodeBlocks(messageId, text) {
+            const codeBlocks = extractCodeBlocks(text);
+            if (codeBlocks.length === 0) return;
+            
+            const codeContainer = document.getElementById(`code-${messageId}`);
+            codeContainer.innerHTML = codeBlocks.map((block, index) => `
+                <div class="code-preview">
+                    <div class="code-header">
+                        <span class="code-language">${block.language}</span>
+                        <button class="copy-btn" onclick="copyCode('${messageId}-${index}')">Copy</button>
+                    </div>
+                    <div class="code-content">
+                        <pre id="code-${messageId}-${index}"><code class="language-${block.language}">${escapeHtml(block.code)}</code></pre>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (window.Prism) {
+                Prism.highlightAll();
+            }
+        }
+
+        function copyCode(codeId) {
+            const codeElement = document.getElementById(`code-${codeId}`);
+            const text = codeElement.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        async function solveProblem() {
+            if (isLoading) return;
+            
+            const problemText = document.getElementById('inputField').value.trim();
+            currentProblem = problemText;
+            currentProblemImage = uploadedImage;
+            
+            if (!problemText && !uploadedImage) {
+                alert('Please enter a problem or upload an image!');
                 return;
             }
-
-            wordProblemResult.innerHTML = '<p class="text-gray-500 text-center animate-pulse">Solving...</p>';
-
-            const systemPrompt = "You are a helpful and expert math tutor. Your task is to solve the provided math word problem, which may be given as text, an image, or both. First, provide a clear, step-by-step solution. Use markdown headings (e.g., ## Step 1) to break down the process. Use LaTeX for all mathematical expressions and formulas. After the solution steps, create a final heading titled 'Final Answer' and clearly state the answer. Do not include any introductory or concluding sentences. The entire output should be a single block of text representing the formatted solution.";
-
-            const apiKey = "";
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-
-            const parts = [];
-            if (userQuery) {
-                parts.push({ text: userQuery });
+            
+            document.getElementById('headerSection').classList.add('hidden');
+            document.getElementById('messagesContainer').classList.remove('hidden');
+            
+            if (problemText) {
+                addMessage(problemText, 'user');
             }
-            if (uploadedImageBase64) {
-                parts.push({
+            if (uploadedImage) {
+                addMessage(`data:${uploadedImage.mimeType};base64,${uploadedImage.data}`, 'user', true);
+            }
+            
+            document.getElementById('inputField').value = '';
+            const currentUploadedImage = uploadedImage;
+            removeImage();
+            
+            setLoading(true);
+            setLoadingText('ProbSolver is thinking...');
+            
+            try {
+                if (currentMode === 'image' && !currentUploadedImage) {
+                    setLoadingText('Generating image...');
+                    await generateImage(problemText);
+                } else if (currentMode === 'image' && currentUploadedImage) {
+                    setLoadingText('Converting image...');
+                    await convertImage(currentUploadedImage, problemText);
+                } else {
+                    setLoadingText('ProbSolver is thinking...');
+                    await callGeminiAPI(problemText, currentUploadedImage);
+                }
+            } catch (error) {
+                setLoading(false);
+                addMessage('⚠️ Sorry, I encountered an error. Please try again.', 'ai');
+                console.error('Error:', error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function generateImage(prompt) {
+            const payload = {
+                contents: [{
+                    parts: [{ text: prompt }]
+                }],
+                generationConfig: {
+                    responseModalities: ['TEXT', 'IMAGE']
+                },
+            };
+            
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${API_KEY}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
+            
+            if (base64Data) {
+                const imageUrl = `data:image/png;base64,${base64Data}`;
+                addMessage('Here is your generated image:', 'ai');
+                addImageMessage(imageUrl);
+            } else {
+                addMessage('⚠️ Sorry, the image could not be generated.', 'ai');
+            }
+        }
+
+        async function convertImage(imageData, prompt) {
+            const parts = [
+                { text: prompt || 'AI artistic conversion' },
+                {
                     inlineData: {
-                        mimeType: uploadedImageMimeType,
-                        data: uploadedImageBase64
+                        mimeType: imageData.mimeType,
+                        data: imageData.data
                     }
-                });
-            }
-
+                }
+            ];
+            
             const payload = {
                 contents: [{ parts }],
-                tools: [{ "google_search": {} }],
-                systemInstruction: {
-                    parts: [{ text: systemPrompt }]
+                generationConfig: {
+                    responseModalities: ['TEXT', 'IMAGE']
                 },
             };
 
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${API_KEY}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            const base64Data = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+            
+            if (base64Data) {
+                const convertedUrl = `data:image/png;base64,${base64Data}`;
+                addMessage('Here is your converted image:', 'ai');
+                addImageMessage(convertedUrl);
+            } else {
+                addMessage('⚠️ Sorry, the image could not be converted.', 'ai');
+            }
+        }
+
+        function addImageMessage(imageUrl) {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai-message';
+            messageDiv.innerHTML = `
+                <div class="ai-content">
+                    <img src="${imageUrl}" class="generated-image" alt="Generated by AI">
+                </div>
+            `;
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        async function callGeminiAPI(prompt, uploadedImage) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${API_KEY}`;
+            
+            const contextPrompt = conversationHistory.length > 0 
+                ? `CONVERSATION HISTORY:\n${conversationHistory
+                    .slice(-10)
+                    .map(msg => `${msg.sender.toUpperCase()}: ${msg.isImage ? '[Image]' : msg.content}`)
+                    .join('\n')}\n\nCURRENT QUESTION: ${prompt}`
+                : prompt;
+
+            const parts = [{ text: contextPrompt }];
+            if (uploadedImage) {
+                parts.push({
+                    inlineData: {
+                        mimeType: uploadedImage.mimeType,
+                        data: uploadedImage.data
+                    }
+                });
+            }
+            
+            const payload = {
+                contents: [{ parts }],
+                systemInstruction: {
+                    parts: [{
+                        text: getSystemInstruction()
+                    }]
+                }
+            };
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            const responseText = result?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not process your request.';
+            
+            const hasCode = detectCode(responseText);
+            const showActions = currentMode === 'study';
+            const messageId = addMessage('', 'ai', false, showActions, hasCode);
+            await typewriterEffect(messageId, responseText);
+        }
+
+        async function explainConcept() {
+            const prompt = `Explain the core concept behind this problem in simple terms: "${currentProblem}"`;
+            setLoading(true);
+            setLoadingText('Explaining concept...');
+            
             try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't solve that problem.";
-                
-                wordProblemResult.innerHTML = parseAndRenderMarkdown(text);
-                
-                renderMathInElement(wordProblemResult, {
-                    delimiters: [
-                        {left: "$$", right: "$$", display: true},
-                        {left: "$", right: "$", display: false},
-                        {left: "\\[", right: "\\]", display: true},
-                        {left: "\\(", right: "\\)", display: false}
-                    ]
-                });
-
+                await callGeminiAPI(prompt, currentProblemImage);
             } catch (error) {
-                wordProblemResult.innerHTML = `<p class="text-red-500 text-center">An error occurred while solving the problem.</p>`;
-                console.error('API Error:', error);
+                addMessage('⚠️ Sorry, I encountered an error generating the explanation.', 'ai');
+            } finally {
+                setLoading(false);
             }
-        });
+        }
 
-        // Add event listener for the Enter key on the textarea
-        wordProblemInput.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault(); // Prevents a new line from being added
-                solveButton.click(); // Trigger the click event on the solve button
+        async function generatePractice() {
+            const prompt = `Generate 3 similar practice problems based on: "${currentProblem}". Include solutions.`;
+            setLoading(true);
+            setLoadingText('Generating practice problems...');
+            
+            try {
+                await callGeminiAPI(prompt, currentProblemImage);
+            } catch (error) {
+                addMessage('⚠️ Sorry, I encountered an error generating practice problems.', 'ai');
+            } finally {
+                setLoading(false);
             }
-        });
+        }
+
+        async function generateSummary() {
+            const prompt = `Create a concise summary of the key steps to solve: "${currentProblem}"`;
+            setLoading(true);
+            setLoadingText('Summarizing...');
+            
+            try {
+                await callGeminiAPI(prompt, currentProblemImage);
+            } catch (error) {
+                addMessage('⚠️ Sorry, I encountered an error generating the summary.', 'ai');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function setLoading(loading) {
+            isLoading = loading;
+            document.getElementById('loading').classList.toggle('hidden', !loading);
+        }
+
+        function setLoadingText(text) {
+            document.getElementById('loadingText').textContent = text;
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('messagesContainer');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function extractCodeBlocks(text) {
+            const codeRegex = /```(\w+)\n([\s\S]*?)```/g;
+            const blocks = [];
+            let match;
+            while ((match = codeRegex.exec(text)) !== null) {
+                blocks.push({
+                    language: match[1],
+                    code: match[2].trim()
+                });
+            }
+            return blocks;
+        }
     </script>
 </body>
 </html>
