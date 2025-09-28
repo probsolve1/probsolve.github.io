@@ -333,7 +333,7 @@
                 transform: scale(1.0);
             }
         }
-        
+
         .footer-input-wrapper {
             position: fixed;
             bottom: 0;
@@ -543,10 +543,7 @@
             <!-- Messages -->
             <div id="messages"></div>
         </div>
-    </div>
 
-    <!-- Fixed Input Section at the bottom -->
-    <div class="footer-input-wrapper">
         <!-- Loading Indicator -->
         <div id="loading" class="loading hidden">
             <div class="loading-dots">
@@ -556,7 +553,10 @@
             </div>
             <span id="loadingText">ProbSolver is thinking...</span>
         </div>
-        
+    </div>
+
+    <!-- Fixed Input Section at the bottom -->
+    <div class="footer-input-wrapper">
         <div class="input-section">
             <!-- Drop Zone (for image mode) -->
             <div id="dropZone" class="drop-zone hidden">
@@ -1093,8 +1093,6 @@ Be creative, helpful, and focus on bringing visual ideas to life.`
         }
 
         async function solveProblem() {
-            if (isLoading) return;
-            
             const problemText = document.getElementById('inputField').value.trim();
             currentProblem = problemText;
             currentProblemImage = uploadedImage;
@@ -1136,8 +1134,6 @@ Be creative, helpful, and focus on bringing visual ideas to life.`
                 setLoading(false);
                 addMessage('⚠️ Sorry, I encountered an error. Please try again.', 'ai');
                 console.error('Error:', error);
-            } finally {
-                setLoading(false);
             }
         }
 
@@ -1166,6 +1162,8 @@ Be creative, helpful, and focus on bringing visual ideas to life.`
             const result = await response.json();
             const base64Data = result?.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data;
             
+            setLoading(false);
+
             if (base64Data) {
                 const imageUrl = `data:image/png;base64,${base64Data}`;
                 addMessage('Here is your generated image:', 'ai');
@@ -1207,6 +1205,8 @@ Be creative, helpful, and focus on bringing visual ideas to life.`
             
             const result = await response.json();
             const base64Data = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+            setLoading(false);
             
             if (base64Data) {
                 const convertedUrl = `data:image/png;base64,${base64Data}`;
@@ -1272,6 +1272,8 @@ Be creative, helpful, and focus on bringing visual ideas to life.`
             const result = await response.json();
             const responseText = result?.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not process your request.';
             
+            setLoading(false);
+            
             const hasCode = detectCode(responseText);
             const showActions = currentMode === 'study';
             const messageId = addMessage('', 'ai', false, showActions, hasCode);
@@ -1286,9 +1288,8 @@ Be creative, helpful, and focus on bringing visual ideas to life.`
             try {
                 await callGeminiAPI(prompt, currentProblemImage);
             } catch (error) {
-                addMessage('⚠️ Sorry, I encountered an error generating the explanation.', 'ai');
-            } finally {
                 setLoading(false);
+                addMessage('⚠️ Sorry, I encountered an error generating the explanation.', 'ai');
             }
         }
 
@@ -1300,9 +1301,8 @@ Be creative, helpful, and focus on bringing visual ideas to life.`
             try {
                 await callGeminiAPI(prompt, currentProblemImage);
             } catch (error) {
-                addMessage('⚠️ Sorry, I encountered an error generating practice problems.', 'ai');
-            } finally {
                 setLoading(false);
+                addMessage('⚠️ Sorry, I encountered an error generating practice problems.', 'ai');
             }
         }
 
@@ -1314,9 +1314,8 @@ Be creative, helpful, and focus on bringing visual ideas to life.`
             try {
                 await callGeminiAPI(prompt, currentProblemImage);
             } catch (error) {
-                addMessage('⚠️ Sorry, I encountered an error generating the summary.', 'ai');
-            } finally {
                 setLoading(false);
+                addMessage('⚠️ Sorry, I encountered an error generating the summary.', 'ai');
             }
         }
 
@@ -1355,3 +1354,4 @@ Be creative, helpful, and focus on bringing visual ideas to life.`
     </script>
 </body>
 </html>
+
